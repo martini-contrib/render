@@ -27,13 +27,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/codegangsta/martini"
 	"html/template"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/codegangsta/martini"
 )
 
 const (
@@ -109,11 +110,14 @@ func Renderer(options ...Options) martini.Handler {
 	cs := prepareCharset(opt.Charset)
 	t := compile(opt)
 	return func(res http.ResponseWriter, req *http.Request, c martini.Context) {
-		// recompile for easy development
+		var tc *template.Template
 		if martini.Env == martini.Dev {
-			t = compile(opt)
+			// recompile for easy development
+			tc = compile(opt)
+		} else {
+			// use a clone of the initial template
+			tc, _ = t.Clone()
 		}
-		tc, _ := t.Clone()
 		c.MapTo(&renderer{res, req, tc, opt, cs}, (*Render)(nil))
 	}
 }
