@@ -219,7 +219,16 @@ func (r *renderer) JSON(status int, v interface{}) {
 	// json rendered fine, write out the result
 	r.Header().Set(ContentType, ContentJSON+r.compiledCharset)
 	r.WriteHeader(status)
+	r.req.ParseForm()
+	cb := r.req.Form.Get("callback")
+	if len(cb) > 0 {
+		r.Write([]byte(cb))
+		r.Write([]byte("("))
+	}
 	r.Write(result)
+	if len(cb) > 0 {
+		r.Write([]byte(");"))
+	}
 }
 
 func (r *renderer) HTML(status int, name string, binding interface{}, htmlOpt ...HTMLOptions) {
