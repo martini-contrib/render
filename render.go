@@ -42,6 +42,7 @@ const (
 	ContentLength  = "Content-Length"
 	ContentJSON    = "application/json"
 	ContentHTML    = "text/html"
+	ContentXHTML	= "application/xhtml+xml"
 	defaultCharset = "UTF-8"
 )
 
@@ -91,6 +92,8 @@ type Options struct {
 	Charset string
 	// Outputs human readable JSON
 	IndentJSON bool
+	// Outputs XHTML instead of HTML
+	XHTML	bool
 }
 
 // HTMLOptions is a struct for overriding some rendering Options for specific HTML call
@@ -108,6 +111,7 @@ type HTMLOptions struct {
 func Renderer(options ...Options) martini.Handler {
 	opt := prepareOptions(options)
 	cs := prepareCharset(opt.Charset)
+	ct := prepareContentType(opt.XHTML)
 	t := compile(opt)
 	return func(res http.ResponseWriter, req *http.Request, c martini.Context) {
 		var tc *template.Template
@@ -118,7 +122,7 @@ func Renderer(options ...Options) martini.Handler {
 			// use a clone of the initial template
 			tc, _ = t.Clone()
 		}
-		c.MapTo(&renderer{res, req, tc, opt, cs}, (*Render)(nil))
+		c.MapTo(&renderer{res, req, tc, opt, cs, ct}, (*Render)(nil))
 	}
 }
 
@@ -128,6 +132,14 @@ func prepareCharset(charset string) string {
 	}
 
 	return "; charset=" + defaultCharset
+}
+
+func prepareContentType(XHTML bool) string {
+	if XHTML {
+		return ContentXHTML
+	} else {
+		return ContentHTML
+	}
 }
 
 func prepareOptions(options []Options) Options {
@@ -195,6 +207,7 @@ type renderer struct {
 	t               *template.Template
 	opt             Options
 	compiledCharset string
+	contentType	string
 }
 
 func (r *renderer) JSON(status int, v interface{}) {
@@ -231,7 +244,7 @@ func (r *renderer) HTML(status int, name string, binding interface{}, htmlOpt ..
 	}
 
 	// template rendered fine, write out the result
-	r.Header().Set(ContentType, ContentHTML+r.compiledCharset)
+	r.Header().Set(ContentType, r.contentType+r.compiledCharset)
 	r.WriteHeader(status)
 	io.Copy(r, out)
 }
