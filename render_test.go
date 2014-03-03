@@ -106,7 +106,7 @@ func Test_Render_XHTML(t *testing.T) {
 	m := martini.Classic()
 	m.Use(Renderer(Options{
 		Directory: "fixtures/basic",
-		XHTML: true,
+		XHTML:     true,
 	}))
 
 	m.Get("/foobar", func(r Render) {

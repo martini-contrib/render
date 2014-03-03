@@ -42,7 +42,7 @@ const (
 	ContentLength  = "Content-Length"
 	ContentJSON    = "application/json"
 	ContentHTML    = "text/html"
-	ContentXHTML	= "application/xhtml+xml"
+	ContentXHTML   = "application/xhtml+xml"
 	defaultCharset = "UTF-8"
 )
 
@@ -93,7 +93,7 @@ type Options struct {
 	// Outputs human readable JSON
 	IndentJSON bool
 	// Outputs XHTML instead of HTML
-	XHTML	bool
+	XHTML bool
 }
 
 // HTMLOptions is a struct for overriding some rendering Options for specific HTML call
@@ -207,7 +207,7 @@ type renderer struct {
 	t               *template.Template
 	opt             Options
 	compiledCharset string
-	contentType	string
+	contentType     string
 }
 
 func (r *renderer) JSON(status int, v interface{}) {
