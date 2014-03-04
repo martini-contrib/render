@@ -105,8 +105,8 @@ func Test_Render_HTML(t *testing.T) {
 func Test_Render_XHTML(t *testing.T) {
 	m := martini.Classic()
 	m.Use(Renderer(Options{
-		Directory: "fixtures/basic",
-		XHTML:     true,
+		Directory:       "fixtures/basic",
+		HTMLContentType: ContentXHTML,
 	}))
 
 	m.Get("/foobar", func(r Render) {
@@ -237,14 +237,14 @@ func Test_Render_Delimiters(t *testing.T) {
 
 func Test_Render_Error404(t *testing.T) {
 	res := httptest.NewRecorder()
-	r := renderer{res, nil, nil, Options{}, "", ContentHTML}
+	r := renderer{res, nil, nil, Options{}, ""}
 	r.Error(404)
 	expect(t, res.Code, 404)
 }
 
 func Test_Render_Error500(t *testing.T) {
 	res := httptest.NewRecorder()
-	r := renderer{res, nil, nil, Options{}, "", ContentHTML}
+	r := renderer{res, nil, nil, Options{}, ""}
 	r.Error(500)
 	expect(t, res.Code, 500)
 }
@@ -257,7 +257,7 @@ func Test_Render_Redirect_Default(t *testing.T) {
 	}
 	res := httptest.NewRecorder()
 
-	r := renderer{res, &req, nil, Options{}, "", ContentHTML}
+	r := renderer{res, &req, nil, Options{}, ""}
 	r.Redirect("two")
 
 	expect(t, res.Code, 302)
@@ -272,7 +272,7 @@ func Test_Render_Redirect_Code(t *testing.T) {
 	}
 	res := httptest.NewRecorder()
 
-	r := renderer{res, &req, nil, Options{}, "", ContentHTML}
+	r := renderer{res, &req, nil, Options{}, ""}
 	r.Redirect("two", 307)
 
 	expect(t, res.Code, 307)
