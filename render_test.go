@@ -102,6 +102,27 @@ func Test_Render_HTML(t *testing.T) {
 	expect(t, res.Body.String(), "<h1>Hello jeremy</h1>\n")
 }
 
+func Test_Render_XHTML(t *testing.T) {
+	m := martini.Classic()
+	m.Use(Renderer(Options{
+		Directory:       "fixtures/basic",
+		HTMLContentType: ContentXHTML,
+	}))
+
+	m.Get("/foobar", func(r Render) {
+		r.HTML(200, "hello", "jeremy")
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/foobar", nil)
+
+	m.ServeHTTP(res, req)
+
+	expect(t, res.Code, 200)
+	expect(t, res.Header().Get(ContentType), ContentXHTML+"; charset=UTF-8")
+	expect(t, res.Body.String(), "<h1>Hello jeremy</h1>\n")
+}
+
 func Test_Render_Extensions(t *testing.T) {
 	m := martini.Classic()
 	m.Use(Renderer(Options{

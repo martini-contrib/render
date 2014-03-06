@@ -47,6 +47,7 @@ m.Use(render.Renderer(render.Options{
   Delims: render.Delims{"{[{", "}]}"}, // Sets delimiters to the specified strings.
   Charset: "UTF-8", // Sets encoding for json and html content-types. Default is "UTF-8".
   IndentJSON: true, // Output human readable JSON
+  HTMLContentType: "application/xhtml+xml", // Output XHTML content type instead of default "text/html"
 }))
 // ...
 ~~~

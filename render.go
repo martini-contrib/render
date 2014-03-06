@@ -42,6 +42,7 @@ const (
 	ContentLength  = "Content-Length"
 	ContentJSON    = "application/json"
 	ContentHTML    = "text/html"
+	ContentXHTML   = "application/xhtml+xml"
 	defaultCharset = "UTF-8"
 )
 
@@ -91,6 +92,8 @@ type Options struct {
 	Charset string
 	// Outputs human readable JSON
 	IndentJSON bool
+	// Allows changing of output to XHTML instead of HTML. Default is "text/html"
+	HTMLContentType string
 }
 
 // HTMLOptions is a struct for overriding some rendering Options for specific HTML call
@@ -142,6 +145,9 @@ func prepareOptions(options []Options) Options {
 	}
 	if len(opt.Extensions) == 0 {
 		opt.Extensions = []string{".tmpl"}
+	}
+	if len(opt.HTMLContentType) == 0 {
+		opt.HTMLContentType = ContentHTML
 	}
 
 	return opt
@@ -231,7 +237,7 @@ func (r *renderer) HTML(status int, name string, binding interface{}, htmlOpt ..
 	}
 
 	// template rendered fine, write out the result
-	r.Header().Set(ContentType, ContentHTML+r.compiledCharset)
+	r.Header().Set(ContentType, r.opt.HTMLContentType+r.compiledCharset)
 	r.WriteHeader(status)
 	io.Copy(r, out)
 }
