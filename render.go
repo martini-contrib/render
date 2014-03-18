@@ -69,6 +69,8 @@ type Render interface {
 	Redirect(location string, status ...int)
 	// Template returns the internal *template.Template used to render the HTML
 	Template() *template.Template
+	// Header exposes the header struct from http.ResponseWriter.
+	Header() http.Header
 }
 
 // Delims represents a set of Left and Right delimiters for HTML template rendering
@@ -246,7 +248,9 @@ func (r *renderer) HTML(status int, name string, binding interface{}, htmlOpt ..
 }
 
 func (r *renderer) Data(status int, v []byte) {
-	r.Header().Set(ContentType, ContentBinary)
+	if r.Header().Get(ContentType) == "" {
+		r.Header().Set(ContentType, ContentBinary)
+	}
 	r.WriteHeader(status)
 	r.Write(v)
 }
