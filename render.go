@@ -43,6 +43,7 @@ const (
 	ContentJSON    = "application/json"
 	ContentHTML    = "text/html"
 	ContentXHTML   = "application/xhtml+xml"
+	ContentBinary  = "application/octet-stream"
 	defaultCharset = "UTF-8"
 )
 
@@ -60,6 +61,8 @@ type Render interface {
 	JSON(status int, v interface{})
 	// HTML renders a html template specified by the name and writes the result and given status to the http.ResponseWriter.
 	HTML(status int, name string, v interface{}, htmlOpt ...HTMLOptions)
+	// Data writes the raw byte array to the http.ResponseWriter.
+	Data(status int, v []byte)
 	// Error is a convenience function that writes an http status to the http.ResponseWriter.
 	Error(status int)
 	// Redirect is a convienience function that sends an HTTP redirect. If status is omitted, uses 302 (Found)
@@ -240,6 +243,12 @@ func (r *renderer) HTML(status int, name string, binding interface{}, htmlOpt ..
 	r.Header().Set(ContentType, r.opt.HTMLContentType+r.compiledCharset)
 	r.WriteHeader(status)
 	io.Copy(r, out)
+}
+
+func (r *renderer) Data(status int, v []byte) {
+	r.Header().Set(ContentType, ContentBinary)
+	r.WriteHeader(status)
+	r.Write(v)
 }
 
 // Error writes the given HTTP status to the current ResponseWriter

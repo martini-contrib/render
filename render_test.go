@@ -235,6 +235,27 @@ func Test_Render_Delimiters(t *testing.T) {
 	expect(t, res.Body.String(), "<h1>Hello jeremy</h1>")
 }
 
+func Test_Render_BinaryData(t *testing.T) {
+	m := martini.Classic()
+	m.Use(Renderer(Options{
+	// nothing here to configure
+	}))
+
+	// routing
+	m.Get("/foobar", func(r Render) {
+		r.Data(200, []byte("hello there"))
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/foobar", nil)
+
+	m.ServeHTTP(res, req)
+
+	expect(t, res.Code, 200)
+	expect(t, res.Header().Get(ContentType), ContentBinary)
+	expect(t, res.Body.String(), "hello there")
+}
+
 func Test_Render_Error404(t *testing.T) {
 	res := httptest.NewRecorder()
 	r := renderer{res, nil, nil, Options{}, ""}
