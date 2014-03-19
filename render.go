@@ -38,12 +38,13 @@ import (
 )
 
 const (
-	ContentType    = "Content-Type"
-	ContentLength  = "Content-Length"
-	ContentJSON    = "application/json"
-	ContentHTML    = "text/html"
-	ContentXHTML   = "application/xhtml+xml"
-	defaultCharset = "UTF-8"
+	ContentType       = "Content-Type"
+	ContentLength     = "Content-Length"
+	ContentJSON       = "application/json"
+	ContentJavascript = "application/javascript"
+	ContentHTML       = "text/html"
+	ContentXHTML      = "application/xhtml+xml"
+	defaultCharset    = "UTF-8"
 )
 
 // Included helper functions for use when rendering html
@@ -216,10 +217,24 @@ func (r *renderer) JSON(status int, v interface{}) {
 		return
 	}
 
+	r.req.ParseForm()
+	cb := r.req.Form.Get("callback")
 	// json rendered fine, write out the result
-	r.Header().Set(ContentType, ContentJSON+r.compiledCharset)
+	contentType := ContentJSON + r.compiledCharset
+	if len(cb) > 0 {
+		contentType = ContentJavascript + r.compiledCharset
+	}
+	r.Header().Set(ContentType, contentType)
 	r.WriteHeader(status)
+
+	if len(cb) > 0 {
+		r.Write([]byte(cb))
+		r.Write([]byte("("))
+	}
 	r.Write(result)
+	if len(cb) > 0 {
+		r.Write([]byte(");"))
+	}
 }
 
 func (r *renderer) HTML(status int, name string, binding interface{}, htmlOpt ...HTMLOptions) {
