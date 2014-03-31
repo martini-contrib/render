@@ -11,7 +11,7 @@ render uses Go's [html/template](http://golang.org/pkg/html/template/) package t
 package main
 
 import (
-  "github.com/codegangsta/martini"
+  "github.com/go-martini/martini"
   "github.com/martini-contrib/render"
 )
 
@@ -103,8 +103,8 @@ The `render.Renderer` middleware will automatically set the proper Content-Type 
 package main
 
 import (
-  "github.com/codegangsta/martini"
-  "github.com/codegangsta/martini-contrib/render"
+  "github.com/go-martini/martini"
+  "github.com/martini-contrib/render"
 )
 
 func main() {
@@ -132,8 +132,8 @@ In order to change the charset, you can set the `Charset` within the `render.Opt
 package main
 
 import (
-  "github.com/codegangsta/martini"
-  "github.com/codegangsta/martini-contrib/render"
+  "github.com/go-martini/martini"
+  "github.com/martini-contrib/render"
 )
 
 func main() {
