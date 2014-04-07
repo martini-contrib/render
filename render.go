@@ -28,7 +28,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -244,7 +243,7 @@ func (r *renderer) HTML(status int, name string, binding interface{}, htmlOpt ..
 	// template rendered fine, write out the result
 	r.Header().Set(ContentType, r.opt.HTMLContentType+r.compiledCharset)
 	r.WriteHeader(status)
-	io.Copy(r, out)
+	r.Write(out.Bytes())
 }
 
 func (r *renderer) Data(status int, v []byte) {
