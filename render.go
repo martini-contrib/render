@@ -52,6 +52,9 @@ var helperFuncs = template.FuncMap{
 	"yield": func() (string, error) {
 		return "", fmt.Errorf("yield called with no layout defined")
 	},
+	"current": func() (string, error) {
+		return "", nil
+	},
 }
 
 // Render is a service that can be injected into a Martini handler. Render provides functions for easily writing JSON and
@@ -284,6 +287,9 @@ func (r *renderer) addYield(name string, binding interface{}) {
 			buf, err := r.execute(name, binding)
 			// return safe html here since we are rendering our own template
 			return template.HTML(buf.String()), err
+		},
+		"current": func() (string, error) {
+			return name, nil
 		},
 	}
 	r.t.Funcs(funcs)
