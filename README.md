@@ -96,6 +96,19 @@ m.Use(render.Renderer(render.Options{
 </html>
 ~~~
 
+`current` can also be called to get the current template being rendered.
+~~~ html
+<!-- templates/layout.tmpl -->
+<html>
+  <head>
+    <title>Martini Plz</title>
+  </head>
+  <body>
+    This is the {{ current }} page.
+  </body>
+</html>
+~~~
+
 ### Character Encodings
 The `render.Renderer` middleware will automatically set the proper Content-Type header based on which function you call. See below for an example of what the default settings would output (note that UTF-8 is the default):
 ~~~ go
