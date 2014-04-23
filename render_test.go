@@ -192,6 +192,26 @@ func Test_Render_Layout(t *testing.T) {
 	expect(t, res.Body.String(), "head\n<h1>jeremy</h1>\n\nfoot\n")
 }
 
+func Test_Render_Layout_Current(t *testing.T) {
+	m := martini.Classic()
+	m.Use(Renderer(Options{
+		Directory: "fixtures/basic",
+		Layout:    "current_layout",
+	}))
+
+	// routing
+	m.Get("/foobar", func(r Render) {
+		r.HTML(200, "content", "jeremy")
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/foobar", nil)
+
+	m.ServeHTTP(res, req)
+
+	expect(t, res.Body.String(), "content head\n<h1>jeremy</h1>\n\ncontent foot\n")
+}
+
 func Test_Render_Nested_HTML(t *testing.T) {
 	m := martini.Classic()
 	m.Use(Renderer(Options{
