@@ -278,6 +278,13 @@ func Test_Render_BinaryData_CustomMimeType(t *testing.T) {
 	expect(t, res.Body.String(), "..jpeg data..")
 }
 
+func Test_Render_Status204(t *testing.T) {
+	res := httptest.NewRecorder()
+	r := renderer{res, nil, nil, Options{}, ""}
+	r.Status(204)
+	expect(t, res.Code, 204)
+}
+
 func Test_Render_Error404(t *testing.T) {
 	res := httptest.NewRecorder()
 	r := renderer{res, nil, nil, Options{}, ""}

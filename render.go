@@ -65,6 +65,8 @@ type Render interface {
 	Data(status int, v []byte)
 	// Error is a convenience function that writes an http status to the http.ResponseWriter.
 	Error(status int)
+	// Status is an alias for Error (writes an http status to the http.ResponseWriter)
+	Status(status int)
 	// Redirect is a convienience function that sends an HTTP redirect. If status is omitted, uses 302 (Found)
 	Redirect(location string, status ...int)
 	// Template returns the internal *template.Template used to render the HTML
@@ -257,6 +259,10 @@ func (r *renderer) Data(status int, v []byte) {
 
 // Error writes the given HTTP status to the current ResponseWriter
 func (r *renderer) Error(status int) {
+	r.WriteHeader(status)
+}
+
+func (r *renderer) Status(status int) {
 	r.WriteHeader(status)
 }
 
