@@ -101,6 +101,8 @@ type Options struct {
 	IndentJSON bool
 	// Allows changing of output to XHTML instead of HTML. Default is "text/html"
 	HTMLContentType string
+	// Predefine templates
+	Template *template.Template
 }
 
 // HTMLOptions is a struct for overriding some rendering Options for specific HTML call
@@ -118,16 +120,24 @@ type HTMLOptions struct {
 func Renderer(options ...Options) martini.Handler {
 	opt := prepareOptions(options)
 	cs := prepareCharset(opt.Charset)
-	t := compile(opt)
+	var t *template.Template
+	if opt.Template == nil {
+		t = compile(opt)
+	}
 	return func(res http.ResponseWriter, req *http.Request, c martini.Context) {
 		var tc *template.Template
-		if martini.Env == martini.Dev {
-			// recompile for easy development
-			tc = compile(opt)
+		if opt.Template == nil {
+			if martini.Env == martini.Dev {
+				// recompile for easy development
+				tc = compile(opt)
+			} else {
+				// use a clone of the initial template
+				tc, _ = t.Clone()
+			}
 		} else {
-			// use a clone of the initial template
-			tc, _ = t.Clone()
+			tc = opt.Template
 		}
+
 		c.MapTo(&renderer{res, req, tc, opt, cs}, (*Render)(nil))
 	}
 }
