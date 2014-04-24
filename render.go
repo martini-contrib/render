@@ -101,7 +101,7 @@ type Options struct {
 	IndentJSON bool
 	// Allows changing of output to XHTML instead of HTML. Default is "text/html"
 	HTMLContentType string
-	// Predefine templates
+	// Allow to use predefine compiled template from external
 	Template *template.Template
 }
 
