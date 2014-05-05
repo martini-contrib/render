@@ -172,4 +172,4 @@ func main() {
 
 ## Authors
 * [Jeremy Saenz](http://github.com/codegangsta)
-* [Cory Jacobsen](http://github.com/cojac)
+* [Cory Jacobsen](http://github.com/unrolled)
