@@ -103,6 +103,8 @@ type Options struct {
 	Charset string
 	// Outputs human readable JSON
 	IndentJSON bool
+	// Prefixes the JSON output with the given bytes.
+	PrefixJSON []byte
 	// Allows changing of output to XHTML instead of HTML. Default is "text/html"
 	HTMLContentType string
 }
@@ -238,6 +240,9 @@ func (r *renderer) JSON(status int, v interface{}) {
 	// json rendered fine, write out the result
 	r.Header().Set(ContentType, ContentJSON+r.compiledCharset)
 	r.WriteHeader(status)
+	if len(r.opt.PrefixJSON) > 0 {
+		r.Write(r.opt.PrefixJSON)
+	}
 	r.Write(result)
 }
 
