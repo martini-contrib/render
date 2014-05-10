@@ -450,6 +450,12 @@ func Test_Render_NoRace(t *testing.T) {
 	<-done
 }
 
+func Test_GetExt(t *testing.T) {
+	expect(t, getExt("test"), "")
+	expect(t, getExt("test.tmpl"), ".tmpl")
+	expect(t, getExt("test.go.html"), ".go.html")
+}
+
 /* Test Helpers */
 func expect(t *testing.T, a interface{}, b interface{}) {
 	if a != b {
