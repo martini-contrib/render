@@ -33,6 +33,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-martini/martini"
 )
@@ -176,7 +177,8 @@ func compile(options Options) *template.Template {
 			return err
 		}
 
-		ext := filepath.Ext(r)
+		ext := getExt(r)
+
 		for _, extension := range options.Extensions {
 			if ext == extension {
 
@@ -203,6 +205,13 @@ func compile(options Options) *template.Template {
 	})
 
 	return t
+}
+
+func getExt(s string) string {
+	if strings.Index(s, ".") == -1 {
+		return ""
+	}
+	return "." + strings.Join(strings.Split(s, ".")[1:], ".")
 }
 
 type renderer struct {
