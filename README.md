@@ -1,5 +1,5 @@
 # render [![wercker status](https://app.wercker.com/status/fcf6b26a1b41f53540200b1949b48dec "wercker status")](https://app.wercker.com/project/bykey/fcf6b26a1b41f53540200b1949b48dec)
-Martini middleware/handler for easily rendering serialized JSON and HTML template responses.
+Martini middleware/handler for easily rendering serialized JSON, XML, and HTML template responses.
 
 [API Reference](http://godoc.org/github.com/martini-contrib/render)
 
@@ -47,6 +47,7 @@ m.Use(render.Renderer(render.Options{
   Delims: render.Delims{"{[{", "}]}"}, // Sets delimiters to the specified strings.
   Charset: "UTF-8", // Sets encoding for json and html content-types. Default is "UTF-8".
   IndentJSON: true, // Output human readable JSON
+  IndentXML: true, // Output human readable XML
   HTMLContentType: "application/xhtml+xml", // Output XHTML content type instead of default "text/html"
 }))
 // ...

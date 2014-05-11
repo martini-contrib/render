@@ -26,6 +26,7 @@ package render
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"html/template"
 	"io"
@@ -41,10 +42,11 @@ import (
 const (
 	ContentType    = "Content-Type"
 	ContentLength  = "Content-Length"
+	ContentBinary  = "application/octet-stream"
 	ContentJSON    = "application/json"
 	ContentHTML    = "text/html"
 	ContentXHTML   = "application/xhtml+xml"
-	ContentBinary  = "application/octet-stream"
+	ContentXML     = "text/xml"
 	defaultCharset = "UTF-8"
 )
 
@@ -65,6 +67,8 @@ type Render interface {
 	JSON(status int, v interface{})
 	// HTML renders a html template specified by the name and writes the result and given status to the http.ResponseWriter.
 	HTML(status int, name string, v interface{}, htmlOpt ...HTMLOptions)
+	// XML writes the given status and XML serialized version of the given value to the http.ResponseWriter.
+	XML(status int, v interface{})
 	// Data writes the raw byte array to the http.ResponseWriter.
 	Data(status int, v []byte)
 	// Error is a convenience function that writes an http status to the http.ResponseWriter.
@@ -103,8 +107,12 @@ type Options struct {
 	Charset string
 	// Outputs human readable JSON
 	IndentJSON bool
+	// Outputs human readable XML
+	IndentXML bool
 	// Prefixes the JSON output with the given bytes.
 	PrefixJSON []byte
+	// Prefixes the XML output with the given bytes.
+	PrefixXML []byte
 	// Allows changing of output to XHTML instead of HTML. Default is "text/html"
 	HTMLContentType string
 }
@@ -264,6 +272,28 @@ func (r *renderer) HTML(status int, name string, binding interface{}, htmlOpt ..
 	r.Header().Set(ContentType, r.opt.HTMLContentType+r.compiledCharset)
 	r.WriteHeader(status)
 	io.Copy(r, out)
+}
+
+func (r *renderer) XML(status int, v interface{}) {
+	var result []byte
+	var err error
+	if r.opt.IndentXML {
+		result, err = xml.MarshalIndent(v, "", "  ")
+	} else {
+		result, err = xml.Marshal(v)
+	}
+	if err != nil {
+		http.Error(r, err.Error(), 500)
+		return
+	}
+
+	// json rendered fine, write out the result
+	r.Header().Set(ContentType, ContentXML+r.compiledCharset)
+	r.WriteHeader(status)
+	if len(r.opt.PrefixXML) > 0 {
+		r.Write(r.opt.PrefixXML)
+	}
+	r.Write(result)
 }
 
 func (r *renderer) Data(status int, v []byte) {
