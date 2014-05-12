@@ -38,6 +38,7 @@ import (
 	"github.com/go-martini/martini"
 )
 
+//
 const (
 	ContentType    = "Content-Type"
 	ContentLength  = "Content-Length"
@@ -107,6 +108,10 @@ type Options struct {
 	PrefixJSON []byte
 	// Allows changing of output to XHTML instead of HTML. Default is "text/html"
 	HTMLContentType string
+	// Asset loads and returns the asset for the given name.
+	Asset func(string) ([]byte, error)
+	// AssetNames is a slice of the asset names (paths).
+	AssetNames []string
 }
 
 // HTMLOptions is a struct for overriding some rendering Options for specific HTML call
@@ -173,38 +178,18 @@ func compile(options Options) *template.Template {
 	// parse an initial template in case we don't have any
 	template.Must(t.Parse("Martini"))
 
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		r, err := filepath.Rel(dir, path)
-		if err != nil {
-			return err
+	if options.Asset != nil && options.AssetNames != nil {
+		// Load templates from the assets (binary data).
+		for _, path := range options.AssetNames {
+			load(options, dir, path, t, options.Asset)
 		}
-
-		ext := getExt(r)
-
-		for _, extension := range options.Extensions {
-			if ext == extension {
-
-				buf, err := ioutil.ReadFile(path)
-				if err != nil {
-					panic(err)
-				}
-
-				name := (r[0 : len(r)-len(ext)])
-				tmpl := t.New(filepath.ToSlash(name))
-
-				// add our funcmaps
-				for _, funcs := range options.Funcs {
-					tmpl.Funcs(funcs)
-				}
-
-				// Bomb out if parse fails. We don't want any silent server starts.
-				template.Must(tmpl.Funcs(helperFuncs).Parse(string(buf)))
-				break
-			}
-		}
-
-		return nil
-	})
+	} else {
+		// Load templates from the files.
+		filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+			load(options, dir, path, t, ioutil.ReadFile)
+			return nil
+		})
+	}
 
 	return t
 }
@@ -214,6 +199,37 @@ func getExt(s string) string {
 		return ""
 	}
 	return "." + strings.Join(strings.Split(s, ".")[1:], ".")
+}
+
+func load(options Options, dir string, path string, t *template.Template, read func(string) ([]byte, error)) {
+	r, err := filepath.Rel(dir, path)
+	if err != nil {
+		panic(err)
+	}
+
+	ext := getExt(r)
+
+	for _, extension := range options.Extensions {
+		if ext == extension {
+
+			buf, err := read(path)
+			if err != nil {
+				panic(err)
+			}
+
+			name := (r[0 : len(r)-len(ext)])
+			tmpl := t.New(filepath.ToSlash(name))
+
+			// add our funcmaps
+			for _, funcs := range options.Funcs {
+				tmpl.Funcs(funcs)
+			}
+
+			// Bomb out if parse fails. We don't want any silent server starts.
+			template.Must(tmpl.Funcs(helperFuncs).Parse(string(buf)))
+			break
+		}
+	}
 }
 
 type renderer struct {
