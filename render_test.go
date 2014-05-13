@@ -1,6 +1,7 @@
 package render
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -56,7 +57,7 @@ func Test_Render_JSON_Prefix(t *testing.T) {
 
 	expect(t, res.Code, 300)
 	expect(t, res.Header().Get(ContentType), ContentJSON+"; charset=UTF-8")
-	expect(t, res.Body.String(), prefix + `{"one":"hello","two":"world"}`)
+	expect(t, res.Body.String(), prefix+`{"one":"hello","two":"world"}`)
 }
 
 func Test_Render_Indented_JSON(t *testing.T) {
@@ -476,6 +477,53 @@ func Test_GetExt(t *testing.T) {
 	expect(t, getExt("test"), "")
 	expect(t, getExt("test.tmpl"), ".tmpl")
 	expect(t, getExt("test.go.html"), ".go.html")
+}
+
+func Test_Load(t *testing.T) {
+	// Case when loading templates from the assets (binary data).
+	m := martini.Classic()
+	m.Use(Renderer(Options{
+		Directory: "fixtures/basic",
+		Asset: func(name string) ([]byte, error) {
+			if name == "fixtures/basic/hello.tmpl" {
+				return []byte("test"), nil
+			}
+			return []byte{}, fmt.Errorf("not found: %s", name)
+		},
+		AssetNames: []string{"fixtures/basic/hello.tmpl"},
+	}))
+
+	m.Get("/foobar", func(r Render) {
+		r.HTML(200, "hello", "jeremy")
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/foobar", nil)
+
+	m.ServeHTTP(res, req)
+
+	expect(t, res.Code, 200)
+	expect(t, res.Header().Get(ContentType), ContentHTML+"; charset=UTF-8")
+	expect(t, res.Body.String(), "test")
+
+	// Case when loading templates from the files.
+	m = martini.Classic()
+	m.Use(Renderer(Options{
+		Directory: "fixtures/basic",
+	}))
+
+	m.Get("/foobar", func(r Render) {
+		r.HTML(200, "hello", "jeremy")
+	})
+
+	res = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/foobar", nil)
+
+	m.ServeHTTP(res, req)
+
+	expect(t, res.Code, 200)
+	expect(t, res.Header().Get(ContentType), ContentHTML+"; charset=UTF-8")
+	expect(t, res.Body.String(), "<h1>Hello jeremy</h1>\n")
 }
 
 /* Test Helpers */

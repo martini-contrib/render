@@ -48,6 +48,8 @@ m.Use(render.Renderer(render.Options{
   Charset: "UTF-8", // Sets encoding for json and html content-types. Default is "UTF-8".
   IndentJSON: true, // Output human readable JSON
   HTMLContentType: "application/xhtml+xml", // Output XHTML content type instead of default "text/html"
+  Asset: Asset, // Asset loads and returns the asset for the given name.
+  AssetNames: AssetNames(), // AssetNames is a slice of the asset names (paths).
 }))
 // ...
 ~~~
