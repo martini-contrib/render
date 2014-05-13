@@ -181,7 +181,9 @@ func compile(options Options) *template.Template {
 	if options.Asset != nil && options.AssetNames != nil {
 		// Load templates from the assets (binary data).
 		for _, path := range options.AssetNames {
-			load(options, dir, path, t, options.Asset)
+			if strings.HasPrefix(path, dir) {
+				load(options, dir, path, t, options.Asset)
+			}
 		}
 	} else {
 		// Load templates from the files.
