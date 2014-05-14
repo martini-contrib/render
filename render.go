@@ -287,7 +287,7 @@ func (r *renderer) XML(status int, v interface{}) {
 		return
 	}
 
-	// json rendered fine, write out the result
+	// XML rendered fine, write out the result
 	r.Header().Set(ContentType, ContentXML+r.compiledCharset)
 	r.WriteHeader(status)
 	if len(r.opt.PrefixXML) > 0 {
