@@ -3,9 +3,17 @@
 //  package main
 //
 //  import (
+//    "encoding/xml"
+//
 //    "github.com/go-martini/martini"
 //    "github.com/martini-contrib/render"
 //  )
+//
+//  type Greeting struct {
+//    XMLName xml.Name `xml:"greeting"`
+//    One     string   `xml:"one,attr"`
+//    Two     string   `xml:"two,attr"`
+//  }
 //
 //  func main() {
 //    m := martini.Classic()
@@ -17,6 +25,10 @@
 //
 //    m.Get("/json", func(r render.Render) {
 //      r.JSON(200, "hello world")
+//    })
+//
+//    m.Get("/xml", func(r render.Render) {
+//      r.XML(200, Greeting{One: "hello", Two: "world"})
 //    })
 //
 //    m.Run()
