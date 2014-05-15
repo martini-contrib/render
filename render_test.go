@@ -1,6 +1,7 @@
 package render
 
 import (
+	"encoding/xml"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +15,12 @@ import (
 type Greeting struct {
 	One string `json:"one"`
 	Two string `json:"two"`
+}
+
+type GreetingXML struct {
+	XMLName xml.Name `xml:"greeting"`
+	One     string   `xml:"one,attr"`
+	Two     string   `xml:"two,attr"`
 }
 
 func Test_Render_JSON(t *testing.T) {
@@ -56,7 +63,7 @@ func Test_Render_JSON_Prefix(t *testing.T) {
 
 	expect(t, res.Code, 300)
 	expect(t, res.Header().Get(ContentType), ContentJSON+"; charset=UTF-8")
-	expect(t, res.Body.String(), prefix + `{"one":"hello","two":"world"}`)
+	expect(t, res.Body.String(), prefix+`{"one":"hello","two":"world"}`)
 }
 
 func Test_Render_Indented_JSON(t *testing.T) {
@@ -81,6 +88,70 @@ func Test_Render_Indented_JSON(t *testing.T) {
   "one": "hello",
   "two": "world"
 }`)
+}
+
+func Test_Render_XML(t *testing.T) {
+	m := martini.Classic()
+	m.Use(Renderer(Options{
+	// nothing here to configure
+	}))
+
+	// routing
+	m.Get("/foobar", func(r Render) {
+		r.XML(300, GreetingXML{One: "hello", Two: "world"})
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/foobar", nil)
+
+	m.ServeHTTP(res, req)
+
+	expect(t, res.Code, 300)
+	expect(t, res.Header().Get(ContentType), ContentXML+"; charset=UTF-8")
+	expect(t, res.Body.String(), `<greeting one="hello" two="world"></greeting>`)
+}
+
+func Test_Render_XML_Prefix(t *testing.T) {
+	m := martini.Classic()
+	prefix := ")]}',\n"
+	m.Use(Renderer(Options{
+		PrefixXML: []byte(prefix),
+	}))
+
+	// routing
+	m.Get("/foobar", func(r Render) {
+		r.XML(300, GreetingXML{One: "hello", Two: "world"})
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/foobar", nil)
+
+	m.ServeHTTP(res, req)
+
+	expect(t, res.Code, 300)
+	expect(t, res.Header().Get(ContentType), ContentXML+"; charset=UTF-8")
+	expect(t, res.Body.String(), prefix+`<greeting one="hello" two="world"></greeting>`)
+}
+
+func Test_Render_Indented_XML(t *testing.T) {
+	m := martini.Classic()
+	m.Use(Renderer(Options{
+		IndentXML: true,
+	}))
+
+	// routing
+	m.Get("/foobar", func(r Render) {
+		r.XML(300, GreetingXML{One: "hello", Two: "world"})
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/foobar", nil)
+
+	m.ServeHTTP(res, req)
+
+	expect(t, res.Code, 300)
+	expect(t, res.Header().Get(ContentType), ContentXML+"; charset=UTF-8")
+	expect(t, res.Body.String(), `<greeting one="hello" two="world"></greeting>`)
 }
 
 func Test_Render_Bad_HTML(t *testing.T) {

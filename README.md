@@ -1,5 +1,5 @@
 # render [![wercker status](https://app.wercker.com/status/fcf6b26a1b41f53540200b1949b48dec "wercker status")](https://app.wercker.com/project/bykey/fcf6b26a1b41f53540200b1949b48dec)
-Martini middleware/handler for easily rendering serialized JSON and HTML template responses.
+Martini middleware/handler for easily rendering serialized JSON, XML, and HTML template responses.
 
 [API Reference](http://godoc.org/github.com/martini-contrib/render)
 
@@ -47,6 +47,7 @@ m.Use(render.Renderer(render.Options{
   Delims: render.Delims{"{[{", "}]}"}, // Sets delimiters to the specified strings.
   Charset: "UTF-8", // Sets encoding for json and html content-types. Default is "UTF-8".
   IndentJSON: true, // Output human readable JSON
+  IndentXML: true, // Output human readable XML
   HTMLContentType: "application/xhtml+xml", // Output XHTML content type instead of default "text/html"
 }))
 // ...
@@ -116,9 +117,17 @@ The `render.Renderer` middleware will automatically set the proper Content-Type 
 package main
 
 import (
+  "encoding/xml"
+
   "github.com/go-martini/martini"
   "github.com/martini-contrib/render"
 )
+
+type Greeting struct {
+  XMLName xml.Name `xml:"greeting"`
+  One     string   `xml:"one,attr"`
+  Two     string   `xml:"two,attr"`
+}
 
 func main() {
   m := martini.Classic()
@@ -134,6 +143,11 @@ func main() {
     r.JSON(200, map[string]interface{}{"hello": "world"})
   })
 
+  // This will set the Content-Type header to "text/xml; charset=UTF-8"
+  m.Get("/xml", func(r render.Render) {
+    r.XML(200, Greeting{One: "hello", Two: "world"})
+  })
+
   m.Run()
 }
 
@@ -145,9 +159,17 @@ In order to change the charset, you can set the `Charset` within the `render.Opt
 package main
 
 import (
+  "encoding/xml"
+
   "github.com/go-martini/martini"
   "github.com/martini-contrib/render"
 )
+
+type Greeting struct {
+  XMLName xml.Name `xml:"greeting"`
+  One     string   `xml:"one,attr"`
+  Two     string   `xml:"two,attr"`
+}
 
 func main() {
   m := martini.Classic()
@@ -155,14 +177,19 @@ func main() {
     Charset: "ISO-8859-1",
   }))
 
-  // This is set the Content-Type to "text/html; charset=ISO-8859-1"
+  // This will set the Content-Type header to "text/html; charset=ISO-8859-1"
   m.Get("/", func(r render.Render) {
     r.HTML(200, "hello", "world")
   })
 
-  // This is set the Content-Type to "application/json; charset=ISO-8859-1"
+  // This will set the Content-Type header to "application/json; charset=ISO-8859-1"
   m.Get("/api", func(r render.Render) {
     r.JSON(200, map[string]interface{}{"hello": "world"})
+  })
+
+  // This will set the Content-Type header to "text/xml; charset=ISO-8859-1"
+  m.Get("/xml", func(r render.Render) {
+    r.XML(200, Greeting{One: "hello", Two: "world"})
   })
 
   m.Run()
