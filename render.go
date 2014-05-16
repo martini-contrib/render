@@ -38,7 +38,6 @@ import (
 	"github.com/go-martini/martini"
 )
 
-//
 const (
 	ContentType    = "Content-Type"
 	ContentLength  = "Content-Length"
