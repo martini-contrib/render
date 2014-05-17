@@ -56,7 +56,7 @@ func Test_Render_JSON_Prefix(t *testing.T) {
 
 	expect(t, res.Code, 300)
 	expect(t, res.Header().Get(ContentType), ContentJSON+"; charset=UTF-8")
-	expect(t, res.Body.String(), prefix + `{"one":"hello","two":"world"}`)
+	expect(t, res.Body.String(), prefix+`{"one":"hello","two":"world"}`)
 }
 
 func Test_Render_Indented_JSON(t *testing.T) {
@@ -124,6 +124,29 @@ func Test_Render_HTML(t *testing.T) {
 	expect(t, res.Body.String(), "<h1>Hello jeremy</h1>\n")
 }
 
+func Test_Render_HTML_From_Binary_Data(t *testing.T) {
+	m := martini.Classic()
+	m.Use(RendererBin(
+		func(name string) ([]byte, error) {
+			return []byte("test"), nil
+		},
+		[]string{"templates/index.tmpl"},
+	))
+
+	// routing
+	m.Get("/foobar", func(r Render) {
+		r.HTML(200, "index", nil)
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/foobar", nil)
+
+	m.ServeHTTP(res, req)
+
+	expect(t, res.Code, 200)
+	expect(t, res.Header().Get(ContentType), ContentHTML+"; charset=UTF-8")
+	expect(t, res.Body.String(), "test")
+}
 func Test_Render_XHTML(t *testing.T) {
 	m := martini.Classic()
 	m.Use(Renderer(Options{
