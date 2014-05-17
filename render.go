@@ -79,6 +79,8 @@ type Render interface {
 	JSON(status int, v interface{})
 	// HTML renders a html template specified by the name and writes the result and given status to the http.ResponseWriter.
 	HTML(status int, name string, v interface{}, htmlOpt ...HTMLOptions)
+	// Cache cache output when finish
+	Cache(func([]byte))
 	// XML writes the given status and XML serialized version of the given value to the http.ResponseWriter.
 	XML(status int, v interface{})
 	// Data writes the raw byte array to the http.ResponseWriter.
@@ -154,7 +156,7 @@ func Renderer(options ...Options) martini.Handler {
 			// use a clone of the initial template
 			tc, _ = t.Clone()
 		}
-		c.MapTo(&renderer{res, req, tc, opt, cs}, (*Render)(nil))
+		c.MapTo(&renderer{res, req, tc, opt, cs, nil}, (*Render)(nil))
 	}
 }
 
@@ -242,6 +244,7 @@ type renderer struct {
 	t               *template.Template
 	opt             Options
 	compiledCharset string
+	cache           func([]byte)
 }
 
 func (r *renderer) JSON(status int, v interface{}) {
@@ -283,7 +286,14 @@ func (r *renderer) HTML(status int, name string, binding interface{}, htmlOpt ..
 	// template rendered fine, write out the result
 	r.Header().Set(ContentType, r.opt.HTMLContentType+r.compiledCharset)
 	r.WriteHeader(status)
+	if r.cache != nil {
+		r.cache(out.Bytes())
+	}
 	io.Copy(r, out)
+}
+
+func (r *renderer) Cache(c func([]byte)) {
+	r.cache = c
 }
 
 func (r *renderer) XML(status int, v interface{}) {
