@@ -149,6 +149,7 @@ func RendererBin(asset func(string) ([]byte, error), assetNames []string, option
 		c.MapTo(&renderer{res, req, tc, opt, cs}, (*Render)(nil))
 	}
 }
+
 func prepareCharset(charset string) string {
 	if len(charset) != 0 {
 		return "; charset=" + charset
