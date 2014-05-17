@@ -265,6 +265,7 @@ func compileBin(asset func(string) ([]byte, error), assetNames []string, options
 
 	return t
 }
+
 func getExt(s string) string {
 	if strings.Index(s, ".") == -1 {
 		return ""
