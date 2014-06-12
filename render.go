@@ -41,11 +41,14 @@ import (
 	"encoding/xml"
 	"fmt"
 	"html/template"
+  "io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/oxtoacart/bpool"
 
 	"github.com/go-martini/martini"
 )
@@ -60,6 +63,9 @@ const (
 	ContentXML     = "text/xml"
 	defaultCharset = "UTF-8"
 )
+
+// Provides a temporary buffer to execute templates into and catch errors.
+var bufpool *bpool.BufferPool
 
 // Included helper functions for use when rendering html
 var helperFuncs = template.FuncMap{
@@ -144,6 +150,7 @@ func Renderer(options ...Options) martini.Handler {
 	opt := prepareOptions(options)
 	cs := prepareCharset(opt.Charset)
 	t := compile(opt)
+	bufpool = bpool.NewBufferPool(64)
 	return func(res http.ResponseWriter, req *http.Request, c martini.Context) {
 		var tc *template.Template
 		if martini.Env == martini.Dev {
@@ -273,7 +280,7 @@ func (r *renderer) HTML(status int, name string, binding interface{}, htmlOpt ..
 		name = opt.Layout
 	}
 
-	out, err := r.execute(name, binding)
+	buf, err := r.execute(name, binding)
 	if err != nil {
 		http.Error(r, err.Error(), http.StatusInternalServerError)
 		return
@@ -282,7 +289,8 @@ func (r *renderer) HTML(status int, name string, binding interface{}, htmlOpt ..
 	// template rendered fine, write out the result
 	r.Header().Set(ContentType, r.opt.HTMLContentType+r.compiledCharset)
 	r.WriteHeader(status)
-	r.Write(out.Bytes())
+	io.Copy(r, buf)
+	bufpool.Put(buf)
 }
 
 func (r *renderer) XML(status int, v interface{}) {
@@ -338,7 +346,7 @@ func (r *renderer) Template() *template.Template {
 }
 
 func (r *renderer) execute(name string, binding interface{}) (*bytes.Buffer, error) {
-	buf := new(bytes.Buffer)
+	buf := bufpool.Get()
 	return buf, r.t.ExecuteTemplate(buf, name, binding)
 }
 
