@@ -148,6 +148,11 @@ func main() {
     r.XML(200, Greeting{One: "hello", Two: "world"})
   })
 
+  // This will set the Content-Type header to "text/plain; charset=UTF-8"
+  m.Get("/text", func(r render.Render) {
+    r.Text(200, "hello, world")
+  })
+
   m.Run()
 }
 
@@ -190,6 +195,11 @@ func main() {
   // This will set the Content-Type header to "text/xml; charset=ISO-8859-1"
   m.Get("/xml", func(r render.Render) {
     r.XML(200, Greeting{One: "hello", Two: "world"})
+  })
+
+  // This will set the Content-Type header to "text/plain; charset=ISO-8859-1"
+  m.Get("/text", func(r render.Render) {
+    r.Text(200, "hello, world")
   })
 
   m.Run()

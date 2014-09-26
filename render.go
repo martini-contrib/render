@@ -57,6 +57,7 @@ const (
 	ContentType    = "Content-Type"
 	ContentLength  = "Content-Length"
 	ContentBinary  = "application/octet-stream"
+	ContentText    = "text/plain"
 	ContentJSON    = "application/json"
 	ContentHTML    = "text/html"
 	ContentXHTML   = "application/xhtml+xml"
@@ -88,6 +89,8 @@ type Render interface {
 	XML(status int, v interface{})
 	// Data writes the raw byte array to the http.ResponseWriter.
 	Data(status int, v []byte)
+	// Text writes the given status and plain text to the http.ResponseWriter.
+	Text(status int, v string)
 	// Error is a convenience function that writes an http status to the http.ResponseWriter.
 	Error(status int)
 	// Status is an alias for Error (writes an http status to the http.ResponseWriter)
@@ -321,6 +324,14 @@ func (r *renderer) Data(status int, v []byte) {
 	}
 	r.WriteHeader(status)
 	r.Write(v)
+}
+
+func (r *renderer) Text(status int, v string) {
+	if r.Header().Get(ContentType) == "" {
+		r.Header().Set(ContentType, ContentText+r.compiledCharset)
+	}
+	r.WriteHeader(status)
+	r.Write([]byte(v))
 }
 
 // Error writes the given HTTP status to the current ResponseWriter
