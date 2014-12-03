@@ -335,8 +335,8 @@ func (r *renderer) Status(status int) {
 }
 
 func (r *renderer) StatusText(status int, text string) {
-	fmt.Fprint(r, status, " ", text)
 	r.WriteHeader(status)
+	fmt.Fprint(r, status, " ", text)
 }
 
 func (r *renderer) Redirect(location string, status ...int) {
