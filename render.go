@@ -135,6 +135,8 @@ type Options struct {
 	PrefixXML []byte
 	// Allows changing of output to XHTML instead of HTML. Default is "text/html"
 	HTMLContentType string
+	// Allows to define a user function to generate templates                                                                                                                                                                                                             
+	CompileHandler func(Options) *template.Template       
 }
 
 // HTMLOptions is a struct for overriding some rendering Options for specific HTML call
@@ -152,13 +154,22 @@ type HTMLOptions struct {
 func Renderer(options ...Options) martini.Handler {
 	opt := prepareOptions(options)
 	cs := prepareCharset(opt.Charset)
-	t := compile(opt)
+	var t *template.Template                                                                                                                                                                                                                                                    
+	if opt.CompileHandler != nil {                                                                                                                                                                                                                                              
+		t = opt.CompileHandler(opt)                                                                                                                                                                                                                                               
+	} else {                                                                                                                                                                                                                                                                    
+		t = compile(opt)                                                                                                                                                                                                                                                          
+	}                 
 	bufpool = bpool.NewBufferPool(64)
 	return func(res http.ResponseWriter, req *http.Request, c martini.Context) {
 		var tc *template.Template
 		if martini.Env == martini.Dev {
 			// recompile for easy development
-			tc = compile(opt)
+			if opt.CompileHandler != nil {                                                                                                                                                                                                                                          
+				tc = opt.CompileHandler(opt)                                                                                                                                                                                                                                          
+			} else {                                                                                                                                                                                                                                                                
+				tc = compile(opt)                                                                                                                                                                                                                                                     
+			}      
 		} else {
 			// use a clone of the initial template
 			tc, _ = t.Clone()
