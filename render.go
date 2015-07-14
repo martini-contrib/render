@@ -41,7 +41,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"html/template"
-  "io"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -49,7 +49,6 @@ import (
 	"strings"
 
 	"github.com/oxtoacart/bpool"
-
 	"github.com/go-martini/martini"
 )
 
