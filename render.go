@@ -167,6 +167,18 @@ func Renderer(options ...Options) martini.Handler {
 	}
 }
 
+// RendererBin is same as Renderer but for loading templates from binary data (assets).
+func RendererBin(asset func(string) ([]byte, error), assetNames []string, options ...Options) martini.Handler {
+	opt := prepareOptions(options)
+	cs := prepareCharset(opt.Charset)
+	t := compileBin(asset, assetNames, opt)
+	return func(res http.ResponseWriter, req *http.Request, c martini.Context) {
+		// use a clone of the initial template
+		tc, _ := t.Clone()
+		c.MapTo(&renderer{res, req, tc, opt, cs}, (*Render)(nil))
+	}
+}
+
 func prepareCharset(charset string) string {
 	if len(charset) != 0 {
 		return "; charset=" + charset
@@ -234,6 +246,52 @@ func compile(options Options) *template.Template {
 
 		return nil
 	})
+
+	return t
+}
+
+// compileBin is same as compile but for loading templates from binary data (assets).
+func compileBin(asset func(string) ([]byte, error), assetNames []string, options Options) *template.Template {
+	dir := options.Directory
+	t := template.New(dir)
+	t.Delims(options.Delims.Left, options.Delims.Right)
+	// parse an initial template in case we don't have any
+	template.Must(t.Parse("Martini"))
+
+	for _, path := range assetNames {
+		if !strings.HasPrefix(path, dir) {
+			continue
+		}
+
+		r, err := filepath.Rel(dir, path)
+		if err != nil {
+			panic(err)
+		}
+
+		ext := getExt(r)
+
+		for _, extension := range options.Extensions {
+			if ext == extension {
+
+				buf, err := asset(path)
+				if err != nil {
+					panic(err)
+				}
+
+				name := (r[0 : len(r)-len(ext)])
+				tmpl := t.New(filepath.ToSlash(name))
+
+				// add our funcmaps
+				for _, funcs := range options.Funcs {
+					tmpl.Funcs(funcs)
+				}
+
+				// Bomb out if parse fails. We don't want any silent server starts.
+				template.Must(tmpl.Funcs(helperFuncs).Parse(string(buf)))
+				break
+			}
+		}
+	}
 
 	return t
 }
