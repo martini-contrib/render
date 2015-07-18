@@ -207,6 +207,35 @@ func main() {
 
 ~~~
 
+### Binary data
+`render.Renderer` provides `Data` functions to write binary data:
+~~~ go
+// ...
+// This will set the Content-Type header to "application/octet-stream"
+m.Get("/binary", func(r render.Render) {
+  r.Data(200, []byte{'h', 'e', 'l', 'l', 'o'})
+})
+// ...
+
+~~~
+
+### Empty responses
+`render.Renderer` provides `Error` and `Status` functions to write responses without data:
+~~~ go
+// ...
+m.Post("/success", func(r render.Render) {
+  r.Status(200)
+})
+
+m.Post("/error", func(r render.Render) {
+  r.Error(500)
+})
+// ...
+
+~~~
+
+Actually, `Status` is an alias for `Error`.
+
 ## Authors
 * [Jeremy Saenz](http://github.com/codegangsta)
 * [Cory Jacobsen](http://github.com/unrolled)
