@@ -41,7 +41,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"html/template"
-  "io"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -95,6 +95,8 @@ type Render interface {
 	Error(status int)
 	// Status is an alias for Error (writes an http status to the http.ResponseWriter)
 	Status(status int)
+	// StatusText is the same as Status except it allows you to customise the error text.
+	StatusText(status int, text string)
 	// Redirect is a convienience function that sends an HTTP redirect. If status is omitted, uses 302 (Found)
 	Redirect(location string, status ...int)
 	// Template returns the internal *template.Template used to render the HTML
@@ -336,11 +338,16 @@ func (r *renderer) Text(status int, v string) {
 
 // Error writes the given HTTP status to the current ResponseWriter
 func (r *renderer) Error(status int) {
-	r.WriteHeader(status)
+	r.Status(status)
 }
 
 func (r *renderer) Status(status int) {
+	r.StatusText(status, http.StatusText(status))
+}
+
+func (r *renderer) StatusText(status int, text string) {
 	r.WriteHeader(status)
+	fmt.Fprint(r, status, " ", text)
 }
 
 func (r *renderer) Redirect(location string, status ...int) {
