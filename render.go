@@ -30,6 +30,10 @@
 //    m.Get("/xml", func(r render.Render) {
 //      r.XML(200, Greeting{One: "hello", Two: "world"})
 //    })
+//    
+//    m.Get("/file/:filename", func(r render.Render, params martini.Params) {
+//      r.Download(params[filename])
+//    })
 //
 //    m.Run()
 //  }
@@ -101,6 +105,8 @@ type Render interface {
 	Template() *template.Template
 	// Header exposes the header struct from http.ResponseWriter.
 	Header() http.Header
+	// Download forces response for download file, it prepares the download response header automatically.
+	Download(file string, filename ...string)
 }
 
 // Delims represents a set of Left and Right delimiters for HTML template rendering
@@ -324,6 +330,21 @@ func (r *renderer) Data(status int, v []byte) {
 	}
 	r.WriteHeader(status)
 	r.Write(v)
+}
+
+func (r *renderer) Download(file string,filename ...string ) {
+	r.Header().Set("Content-Description","File Transfer")
+	r.Header().Set("Content-Type","application/octet-stream")
+	if len(filename) > 0 && filename[0] != "" {
+		r.Header().Set("Content-Disposition", "attachment; filename="+filename[0])
+	} else {
+		r.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(file))
+	}
+	r.Header().Set("Content-Transfer-Encoding", "binary")
+	r.Header().Set("Expires", "0")
+	r.Header().Set("Cache-Control", "must-revalidate")
+	r.Header().Set("Pragma", "public")
+	http.ServeFile(r.ResponseWriter,r.req,file)
 }
 
 func (r *renderer) Text(status int, v string) {
