@@ -36,12 +36,11 @@
 package render
 
 import (
-	"bytes"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"html/template"
-  "io"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -283,7 +282,10 @@ func (r *renderer) HTML(status int, name string, binding interface{}, htmlOpt ..
 		name = opt.Layout
 	}
 
-	buf, err := r.execute(name, binding)
+	buf := bufpool.Get()
+	defer bufpool.Put(buf)
+
+	err := r.t.ExecuteTemplate(buf, name, binding)
 	if err != nil {
 		http.Error(r, err.Error(), http.StatusInternalServerError)
 		return
@@ -293,7 +295,6 @@ func (r *renderer) HTML(status int, name string, binding interface{}, htmlOpt ..
 	r.Header().Set(ContentType, r.opt.HTMLContentType+r.compiledCharset)
 	r.WriteHeader(status)
 	io.Copy(r, buf)
-	bufpool.Put(buf)
 }
 
 func (r *renderer) XML(status int, v interface{}) {
@@ -356,15 +357,13 @@ func (r *renderer) Template() *template.Template {
 	return r.t
 }
 
-func (r *renderer) execute(name string, binding interface{}) (*bytes.Buffer, error) {
-	buf := bufpool.Get()
-	return buf, r.t.ExecuteTemplate(buf, name, binding)
-}
-
 func (r *renderer) addYield(name string, binding interface{}) {
 	funcs := template.FuncMap{
 		"yield": func() (template.HTML, error) {
-			buf, err := r.execute(name, binding)
+			buf := bufpool.Get()
+			defer bufpool.Put(buf)
+
+			err := r.t.ExecuteTemplate(buf, name, binding)
 			// return safe html here since we are rendering our own template
 			return template.HTML(buf.String()), err
 		},
