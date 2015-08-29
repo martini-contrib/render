@@ -41,7 +41,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"html/template"
-  "io"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -51,6 +51,8 @@ import (
 	"github.com/oxtoacart/bpool"
 
 	"github.com/go-martini/martini"
+
+	"github.com/eknkc/amber"
 )
 
 const (
@@ -153,17 +155,33 @@ func Renderer(options ...Options) martini.Handler {
 	opt := prepareOptions(options)
 	cs := prepareCharset(opt.Charset)
 	t := compile(opt)
+	compiledAmberFiles, err := compileAmberFiles(opt)
+	if err != nil {
+		panic(err)
+	}
+
+	// Check no name conflicts between template and amber
+	for n := range compiledAmberFiles {
+		found := t.Lookup(n)
+		if found != nil {
+			panic(fmt.Errorf("Template name conflict: \"%s\"", n))
+		}
+	}
+
 	bufpool = bpool.NewBufferPool(64)
 	return func(res http.ResponseWriter, req *http.Request, c martini.Context) {
 		var tc *template.Template
+		var at map[string]*template.Template
 		if martini.Env == martini.Dev {
 			// recompile for easy development
 			tc = compile(opt)
+			at, _ = compileAmberFiles(opt)
 		} else {
 			// use a clone of the initial template
 			tc, _ = t.Clone()
+			at = compiledAmberFiles
 		}
-		c.MapTo(&renderer{res, req, tc, opt, cs}, (*Render)(nil))
+		c.MapTo(&renderer{res, req, tc, opt, cs, at}, (*Render)(nil))
 	}
 }
 
@@ -251,6 +269,7 @@ type renderer struct {
 	t               *template.Template
 	opt             Options
 	compiledCharset string
+	amberFiles      map[string]*template.Template
 }
 
 func (r *renderer) JSON(status int, v interface{}) {
@@ -358,6 +377,9 @@ func (r *renderer) Template() *template.Template {
 
 func (r *renderer) execute(name string, binding interface{}) (*bytes.Buffer, error) {
 	buf := bufpool.Get()
+	if amb, ok := r.amberFiles[name]; ok && amb != nil {
+		return buf, amb.Execute(buf, binding)
+	}
 	return buf, r.t.ExecuteTemplate(buf, name, binding)
 }
 
@@ -383,4 +405,13 @@ func (r *renderer) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
 	return HTMLOptions{
 		Layout: r.opt.Layout,
 	}
+}
+
+func compileAmberFiles(opt Options) (map[string]*template.Template, error) {
+	ret, err := amber.CompileDir(opt.Directory, amber.DefaultDirOptions, amber.DefaultOptions)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+
+	return ret, err
 }

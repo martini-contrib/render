@@ -393,21 +393,21 @@ func Test_Render_BinaryData_CustomMimeType(t *testing.T) {
 
 func Test_Render_Status204(t *testing.T) {
 	res := httptest.NewRecorder()
-	r := renderer{res, nil, nil, Options{}, ""}
+	r := renderer{res, nil, nil, Options{}, "", nil}
 	r.Status(204)
 	expect(t, res.Code, 204)
 }
 
 func Test_Render_Error404(t *testing.T) {
 	res := httptest.NewRecorder()
-	r := renderer{res, nil, nil, Options{}, ""}
+	r := renderer{res, nil, nil, Options{}, "", nil}
 	r.Error(404)
 	expect(t, res.Code, 404)
 }
 
 func Test_Render_Error500(t *testing.T) {
 	res := httptest.NewRecorder()
-	r := renderer{res, nil, nil, Options{}, ""}
+	r := renderer{res, nil, nil, Options{}, "", nil}
 	r.Error(500)
 	expect(t, res.Code, 500)
 }
@@ -420,7 +420,7 @@ func Test_Render_Redirect_Default(t *testing.T) {
 	}
 	res := httptest.NewRecorder()
 
-	r := renderer{res, &req, nil, Options{}, ""}
+	r := renderer{res, &req, nil, Options{}, "", nil}
 	r.Redirect("two")
 
 	expect(t, res.Code, 302)
@@ -435,7 +435,7 @@ func Test_Render_Redirect_Code(t *testing.T) {
 	}
 	res := httptest.NewRecorder()
 
-	r := renderer{res, &req, nil, Options{}, ""}
+	r := renderer{res, &req, nil, Options{}, "", nil}
 	r.Redirect("two", 307)
 
 	expect(t, res.Code, 307)
