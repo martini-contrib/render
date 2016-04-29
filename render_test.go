@@ -549,12 +549,17 @@ func Test_Render_Using_Converter(t *testing.T) {
 	m := martini.Classic()
 	m.Use(Renderer(Options{
 		Directory: "fixtures/custom_converter",
-		Converter: func(in string) string {
+		Extensions: []string{".php"},
+		Converter: func(source string, extension string) string {
+			if extension != ".php" {
+				return source
+			}
+
 			// Only get the template directives
 			findAllTemplates, _ := regexp.Compile(`<\?\=\$([^'"\?>]*)\?>`)
-			submatches := findAllTemplates.FindAllStringSubmatch(in, -1)
+			submatches := findAllTemplates.FindAllStringSubmatch(source, -1)
 
-			out := findAllTemplates.ReplaceAllStringFunc(in, func(s string) string {
+			out := findAllTemplates.ReplaceAllStringFunc(source, func(s string) string {
 				s = strings.TrimSpace(s)
 				for _, value := range submatches {
 					oldString := value[0]
