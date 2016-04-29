@@ -135,6 +135,8 @@ type Options struct {
 	PrefixXML []byte
 	// Allows changing of output to XHTML instead of HTML. Default is "text/html"
 	HTMLContentType string
+	// Allows convert the template to a standard format.
+	Converter func(source string, extension string) string
 }
 
 // HTMLOptions is a struct for overriding some rendering Options for specific HTML call
@@ -226,8 +228,13 @@ func compile(options Options) *template.Template {
 					tmpl.Funcs(funcs)
 				}
 
+				source := string(buf)
+				if options.Converter != nil {
+					source = options.Converter(source, extension)
+				}
+
 				// Bomb out if parse fails. We don't want any silent server starts.
-				template.Must(tmpl.Funcs(helperFuncs).Parse(string(buf)))
+				template.Must(tmpl.Funcs(helperFuncs).Parse(source))
 				break
 			}
 		}
