@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"reflect"
 	"testing"
+	"strings"
+	"regexp"
 
 	"github.com/go-martini/martini"
 )
@@ -541,6 +543,44 @@ func Test_Render_NoRace(t *testing.T) {
 	go doreq()
 	<-done
 	<-done
+}
+
+func Test_Render_Using_Converter(t *testing.T) {
+	m := martini.Classic()
+	m.Use(Renderer(Options{
+		Directory: "fixtures/custom_converter",
+		Converter: func(in string) string {
+			// Only get the template directives
+			findAllTemplates, _ := regexp.Compile(`<\?\=\$([^'"\?>]*)\?>`)
+			submatches := findAllTemplates.FindAllStringSubmatch(in, -1)
+
+			out := findAllTemplates.ReplaceAllStringFunc(in, func(s string) string {
+				s = strings.TrimSpace(s)
+				for _, value := range submatches {
+					oldString := value[0]
+					newString := "{{ ." + strings.Title(value[1]) + " }}" // Convert to a standard format
+					s = strings.Replace(s, oldString, newString, -1)
+				}
+				return s
+			})
+
+			return out // Return the ready template
+		},
+	}))
+
+	// routing
+	m.Get("/foobar", func(r Render) {
+		r.HTML(200, "index", Greeting{"hello", "world"})
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/foobar", nil)
+
+	m.ServeHTTP(res, req)
+
+	expect(t, res.Code, 200)
+	expect(t, res.Header().Get(ContentType), ContentHTML+"; charset=UTF-8")
+	expect(t, res.Body.String(), "Custom converter: hello world\n")
 }
 
 func Test_GetExt(t *testing.T) {
