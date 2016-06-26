@@ -101,6 +101,10 @@ type Render interface {
 	Template() *template.Template
 	// Header exposes the header struct from http.ResponseWriter.
 	Header() http.Header
+	// GetRequest retrieve http request for using the associated information
+	GetRequest() *http.Request
+	// GetResponseWriter retrieve http response for using the associated information
+	GetResponseWriter() *renderer
 }
 
 // Delims represents a set of Left and Right delimiters for HTML template rendering
@@ -383,4 +387,12 @@ func (r *renderer) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
 	return HTMLOptions{
 		Layout: r.opt.Layout,
 	}
+}
+
+func (r *renderer) GetRequest() *http.Request {
+	return r.req
+}
+
+func (r *renderer) GetResponseWriter() *renderer {
+	return r
 }
