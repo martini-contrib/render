@@ -36,6 +36,7 @@
 package render
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
@@ -60,6 +61,8 @@ const (
 	ContentText    = "text/plain"
 	ContentJSON    = "application/json"
 	ContentHTML    = "text/html"
+	ContentCSS     = "text/css"
+	ContentJS      = "text/javascript"
 	ContentXHTML   = "application/xhtml+xml"
 	ContentXML     = "text/xml"
 	defaultCharset = "UTF-8"
@@ -85,6 +88,8 @@ type Render interface {
 	JSON(status int, v interface{})
 	// HTML renders a html template specified by the name and writes the result and given status to the http.ResponseWriter.
 	HTML(status int, name string, v interface{}, htmlOpt ...HTMLOptions)
+	// CSSJS renders a css or js template specified by the name and writes the result and given status to the http.ResponseWriter.
+	CSSJS(status int, directory string)
 	// XML writes the given status and XML serialized version of the given value to the http.ResponseWriter.
 	XML(status int, v interface{})
 	// Data writes the raw byte array to the http.ResponseWriter.
@@ -101,6 +106,10 @@ type Render interface {
 	Template() *template.Template
 	// Header exposes the header struct from http.ResponseWriter.
 	Header() http.Header
+	// GetRequest retrieve http request for using the associated information
+	GetRequest() *http.Request
+	// GetResponseWriter retrieve http response for using the associated information
+	GetResponseWriter() *renderer
 }
 
 // Delims represents a set of Left and Right delimiters for HTML template rendering
@@ -296,6 +305,35 @@ func (r *renderer) HTML(status int, name string, binding interface{}, htmlOpt ..
 	bufpool.Put(buf)
 }
 
+func (r *renderer) CSSJS(status int, directory string) {
+	arrayURL := strings.Split(r.req.URL.Path, "/")
+	path := arrayURL[len(arrayURL)-1]
+
+	var content string
+	if strings.HasSuffix(path, ".css") {
+		content = ContentCSS
+	} else if strings.HasSuffix(path, ".js") {
+		content = ContentJS
+	} else {
+		content = ContentText
+	}
+
+	if directory > "" {
+		path = directory + "/" + path
+	}
+
+	f, err := os.Open(path)
+
+	if err == nil {
+		defer f.Close()
+		r.Header().Add(ContentType, content)
+		br := bufio.NewReader(f)
+		br.WriteTo(r)
+	} else {
+		r.WriteHeader(http.StatusNotFound)
+	}
+}
+
 func (r *renderer) XML(status int, v interface{}) {
 	var result []byte
 	var err error
@@ -383,4 +421,12 @@ func (r *renderer) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
 	return HTMLOptions{
 		Layout: r.opt.Layout,
 	}
+}
+
+func (r *renderer) GetRequest() *http.Request {
+	return r.req
+}
+
+func (r *renderer) GetResponseWriter() *renderer {
+	return r
 }
