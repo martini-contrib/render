@@ -202,6 +202,11 @@ func main() {
     r.Text(200, "hello, world")
   })
 
+  // This will set the Content-Type header to "application/javascript; charset=ISO-8859-1"
+  m.Get("/jsonp", func(r render.Render) {
+    r.Text(200, map[string]interface{}{"hello": "world"},"callback")
+  })
+
   m.Run()
 }
 

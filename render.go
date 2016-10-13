@@ -41,7 +41,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"html/template"
-  "io"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -62,6 +62,7 @@ const (
 	ContentHTML    = "text/html"
 	ContentXHTML   = "application/xhtml+xml"
 	ContentXML     = "text/xml"
+	ContentScript  = "application/javascript"
 	defaultCharset = "UTF-8"
 )
 
@@ -81,6 +82,8 @@ var helperFuncs = template.FuncMap{
 // Render is a service that can be injected into a Martini handler. Render provides functions for easily writing JSON and
 // HTML templates out to a http Response.
 type Render interface {
+	// JSONP writes the given status and JSON serialized version of the given value to the http.ResponseWriter.
+	JSONP(status int, v interface{}, callback string)
 	// JSON writes the given status and JSON serialized version of the given value to the http.ResponseWriter.
 	JSON(status int, v interface{})
 	// HTML renders a html template specified by the name and writes the result and given status to the http.ResponseWriter.
@@ -251,6 +254,38 @@ type renderer struct {
 	t               *template.Template
 	opt             Options
 	compiledCharset string
+}
+
+func (r *renderer) JSONP(status int, v interface{}, callback string) {
+
+	var result []byte
+	var err error
+	if r.opt.IndentJSON {
+		result, err = json.MarshalIndent(v, "", "  ")
+	} else {
+		result, err = json.Marshal(v)
+	}
+	if err != nil {
+		http.Error(r, err.Error(), 500)
+		return
+	}
+
+	buf := bytes.NewBufferString(callback + "(")
+
+	// json rendered fine, write out the result
+	r.Header().Set(ContentType, ContentScript+r.compiledCharset)
+	r.WriteHeader(status)
+	if len(r.opt.PrefixJSON) > 0 {
+
+		buf.Write(r.opt.PrefixJSON)
+		buf.WriteString(")")
+		r.Write(buf.Bytes())
+	}
+
+	buf.Write(result)
+	buf.WriteString(")")
+	r.Write(buf.Bytes())
+
 }
 
 func (r *renderer) JSON(status int, v interface{}) {
