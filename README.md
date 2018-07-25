@@ -152,7 +152,10 @@ func main() {
   m.Get("/text", func(r render.Render) {
     r.Text(200, "hello, world")
   })
-
+  //This will set the Content-Type header to "text/html; charset=UTF-8"
+  m.Get("/string", func(r render.Render) {
+    r.Str(200, "<h1>hello, world</h1>")
+  })
   m.Run()
 }
 
@@ -201,7 +204,10 @@ func main() {
   m.Get("/text", func(r render.Render) {
     r.Text(200, "hello, world")
   })
-
+  //This will set the Content-Type header to "text/html; charset=UTF-8"
+  m.Get("/string", func(r render.Render) {
+    r.Str(200, "<h1>hello, world</h1>")
+  })
   m.Run()
 }
 
