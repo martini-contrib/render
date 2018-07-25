@@ -41,7 +41,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"html/template"
-  "io"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -81,6 +81,8 @@ var helperFuncs = template.FuncMap{
 // Render is a service that can be injected into a Martini handler. Render provides functions for easily writing JSON and
 // HTML templates out to a http Response.
 type Render interface {
+	//String writes the given status and plain text to the http.ResponseWriter.
+	Str(status int, v string)
 	// JSON writes the given status and JSON serialized version of the given value to the http.ResponseWriter.
 	JSON(status int, v interface{})
 	// HTML renders a html template specified by the name and writes the result and given status to the http.ResponseWriter.
@@ -253,6 +255,14 @@ type renderer struct {
 	compiledCharset string
 }
 
+func (r *renderer) Str(status int, v string) {
+	if r.Header().Get(ContentType) == "" {
+		//r.Header().Set(ContentType, ContentText+r.compiledCharset)
+		r.Header().Set(ContentType, "text/html")
+	}
+	r.WriteHeader(status)
+	r.Write([]byte(v))
+}
 func (r *renderer) JSON(status int, v interface{}) {
 	var result []byte
 	var err error
